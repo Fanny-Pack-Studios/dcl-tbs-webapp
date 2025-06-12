@@ -1,0 +1,17 @@
+{
+  "name": "@fullstack-nest-app/shared",
+  "version": "1.0.0",
+  "description": "Shared types and interfaces for the fullstack-nest-app",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}
