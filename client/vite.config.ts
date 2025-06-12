@@ -10,7 +10,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001', // Proxy API requests to NestJS backend
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''), // Remove /api prefix when forwarding
+        // Removed the rewrite rule: (path) => path.replace(/^\/api/, '')
+        // Now, /api requests from client will be forwarded as /api to backend.
       },
     },
   },
