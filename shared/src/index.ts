@@ -1,18 +1,26 @@
-export interface Message {
-  text: string;
-  timestamp: number;
-}
+export type WebSocketMessage =
+  | HandshakeMessage
+  | HandshakeAckMessage
+  | VideoFrameMessage;
 
-// New interfaces for WebSocket signaling
-export type SignalingMessageType = 'handshake' | 'handshake-ack';
+export type HandshakeMessage = { type: "handshake"; payload: HandshakePayload };
 
-export interface WebSocketMessage<T = any> {
-  type: SignalingMessageType | 'video-frame'; // 'video-frame' is a custom type for screen sharing
-  payload: T;
-}
+export type HandshakeAckMessage = {
+  type: "handshake-ack";
+  payload: HandshakeAckPayload;
+};
 
+export type VideoFrameMessage = {
+  type: "video-frame";
+  payload: HandshakeAckPayload;
+};
+
+export type MessagePayload =
+  | HandshakePayload
+  | VideoFramePayload
+  | HandshakeAckPayload;
 export interface HandshakePayload {
-  clientId: string; // A unique ID for the client
+  clientId: string;
 }
 
 export interface HandshakeAckPayload {
@@ -20,7 +28,6 @@ export interface HandshakeAckPayload {
   clientId: string;
 }
 
-// New interface for sending video frames over WebSocket
 export interface VideoFramePayload {
-   string; // Base64 encoded video chunk
+  data: string; // Base64 encoded video chunk
 }

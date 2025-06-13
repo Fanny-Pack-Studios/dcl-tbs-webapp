@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { WebSocketMessage, HandshakePayload, HandshakeAckPayload, SignalingMessageType, VideoFramePayload } from '@fullstack-nest-app/shared';
+import { WebSocketMessage, HandshakeAckPayload, VideoFramePayload, MessagePayload } from '@fullstack-nest-app/shared';
 
 function App() {
   const [sharingStatus, setSharingStatus] = useState<'idle' | 'sharing' | 'stopped' | 'error' | 'connecting' | 'handshaking'>('connecting');
@@ -15,7 +15,7 @@ function App() {
   // --- WebSocket Connection and Handshake ---
   useEffect(() => {
     setSharingStatus('connecting');
-    ws.current = new WebSocket('ws://localhost:3001'); // Connect to NestJS WebSocket server
+    ws.current = new WebSocket('http://localhost:3001/video'); // Connect to NestJS WebSocket server
 
     ws.current.onopen = () => {
       console.log('WebSocket connected.');
@@ -23,7 +23,7 @@ function App() {
       setSharingStatus('handshaking');
 
       // Send handshake message
-      const handshakeMessage: WebSocketMessage<HandshakePayload> = {
+      const handshakeMessage: WebSocketMessage = {
         type: 'handshake',
         payload: { clientId: clientId.current },
       };
@@ -51,8 +51,8 @@ function App() {
       }
     };
 
-    ws.current.onclose = () => {
-      console.log('WebSocket disconnected.');
+    ws.current.onclose = (event: CloseEvent) => {
+      console.log(`WebSocket disconnected: ${event.reason} - Code: ${event.code}`);
       setWsConnected(false);
       if (sharingStatus !== 'error' && sharingStatus !== 'stopped') {
         setSharingStatus('error'); // Indicate connection loss
@@ -77,9 +77,10 @@ function App() {
   }, []); // Empty dependency array means this runs once on mount
 
   // Helper to send messages over WebSocket
-  const sendWebSocketMessage = (type: WebSocketMessage['type'], payload: any) => {
+  const sendWebSocketMessage = (type: WebSocketMessage['type'], payload: MessagePayload) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      const message: WebSocketMessage = { type, payload };
+      const message = { type, payload };
+
       ws.current.send(JSON.stringify(message));
     } else {
       console.warn('WebSocket not connected, cannot send message:', type);
@@ -111,7 +112,7 @@ function App() {
           const reader = new FileReader();
           reader.onload = () => {
             const base64data = reader.result as string;
-            sendWebSocketMessage('video-frame', {  base64data.split(',')[1] }); // Send only the base64 part
+            sendWebSocketMessage('video-frame', {  data: base64data.split(',')[1] }); // Send only the base64 part
           };
           reader.readAsDataURL(event.data);
         }
