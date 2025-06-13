@@ -24,8 +24,12 @@
     "@nestjs/common": "11.1.3",
     "@nestjs/core": "11.1.3",
     "@nestjs/platform-express": "11.1.3",
+    "@nestjs/websockets": "^10.3.10",
+    "@nestjs/platform-socket.io": "^10.3.10",
     "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "rxjs": "7.8.2",
+    "socket.io": "^4.7.5",
+    "wrtc": "^0.4.7"
   },
   "devDependencies": {
     "@nestjs/cli": "11.0.7",
@@ -35,6 +39,7 @@
     "@types/jest": "29.5.14",
     "@types/node": "24.0.1",
     "@types/supertest": "6.0.3",
+    "@types/wrtc": "^0.0.14",
     "@typescript-eslint/eslint-plugin": "8.34.0",
     "@typescript-eslint/parser": "8.34.0",
     "eslint": "9.28.0",
