@@ -12,7 +12,7 @@ export type HandshakeAckMessage = {
 
 export type VideoFrameMessage = {
   type: "video-frame";
-  payload: HandshakeAckPayload;
+  payload: VideoFramePayload; // Corrected this line
 };
 
 export type MessagePayload =
@@ -29,5 +29,5 @@ export interface HandshakeAckPayload {
 }
 
 export interface VideoFramePayload {
-  data: string; // Base64 encoded video chunk
+   string; // Base64 encoded video chunk
 }

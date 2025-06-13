@@ -1,95 +1,90 @@
 import { useState, useRef, useEffect } from 'react';
-import { WebSocketMessage, HandshakeAckPayload, VideoFramePayload, MessagePayload } from '@fullstack-nest-app/shared';
+import { io, Socket } from 'socket.io-client'; // Import io and Socket
+import { WebSocketMessage, HandshakePayload, HandshakeAckPayload, VideoFramePayload, MessagePayload } from '@fullstack-nest-app/shared';
 
 function App() {
   const [sharingStatus, setSharingStatus] = useState<'idle' | 'sharing' | 'stopped' | 'error' | 'connecting' | 'handshaking'>('connecting');
   const [wsConnected, setWsConnected] = useState(false);
   const mediaStream = useRef<MediaStream | null>(null);
-  const ws = useRef<WebSocket | null>(null);
+  const socket = useRef<Socket | null>(null); // Changed from ws to socket
   const clientId = useRef<string>(`client-${Math.random().toString(36).substring(2, 9)}`); // Simple unique ID
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameId = useRef<number | null>(null);
 
-  // --- WebSocket Connection and Handshake ---
+  // --- Socket.IO Connection and Handshake ---
   useEffect(() => {
     setSharingStatus('connecting');
-    ws.current = new WebSocket('http://localhost:3001/video'); // Connect to NestJS WebSocket server
+    // Connect to NestJS WebSocket server with the specified namespace
+    socket.current = io('http://localhost:3001/video');
 
-    ws.current.onopen = () => {
-      console.log('WebSocket connected.');
+    socket.current.on('connect', () => {
+      console.log('Socket.IO connected.');
       setWsConnected(true);
       setSharingStatus('handshaking');
 
       // Send handshake message
-      const handshakeMessage: WebSocketMessage = {
-        type: 'handshake',
-        payload: { clientId: clientId.current },
-      };
-      ws.current?.send(JSON.stringify(handshakeMessage));
+      const handshakeMessage: HandshakePayload = { clientId: clientId.current };
+      sendWebSocketMessage('handshake', handshakeMessage);
       console.log('Handshake message sent.');
-    };
+    });
 
-    ws.current.onmessage = (event) => {
-      const message: WebSocketMessage = JSON.parse(event.data);
-      console.log('WebSocket message received:', message);
+    socket.current.on('handshake-ack', (message: HandshakeAckPayload) => {
+      // Note: With Socket.IO, if the server's @MessageBody() expects the full WebSocketMessage,
+      // then the message received here would be { type: 'handshake-ack', payload: HandshakeAckPayload }.
+      // Assuming the server sends just the payload for 'handshake-ack' for simplicity here.
+      // If not, you'd access message.payload.
+      console.log(`Handshake acknowledged by server: ${message.message}`);
+      setSharingStatus('idle'); // Ready to share after handshake
+    });
 
-      switch (message.type) {
-        case 'handshake-ack':
-          const ackPayload = message.payload as HandshakeAckPayload;
-          console.log(`Handshake acknowledged by server: ${ackPayload.message}`);
-          setSharingStatus('idle'); // Ready to share after handshake
-          break;
-        case 'video-frame':
-          // Server might re-broadcast video frames, or this could be for a different purpose
-          // For this example, we're just sending frames from client to server.
-          console.log('Received video frame from server (not expected in this client-sends-only flow):', (message.payload as VideoFramePayload).data.length);
-          break;
-        default:
-          console.warn('Unknown WebSocket message type:', message.type);
-      }
-    };
+    socket.current.on('video-frame', (message: VideoFramePayload) => {
+      // Server might re-broadcast video frames, or this could be for a different purpose
+      // For this example, we're just sending frames from client to server.
+      console.log('Received video frame from server (not expected in this client-sends-only flow):', message.data.length);
+    });
 
-    ws.current.onclose = (event: CloseEvent) => {
-      console.log(`WebSocket disconnected: ${event.reason} - Code: ${event.code}`);
+    socket.current.on('disconnect', (reason) => {
+      console.log(`Socket.IO disconnected: ${reason}`);
       setWsConnected(false);
       if (sharingStatus !== 'error' && sharingStatus !== 'stopped') {
         setSharingStatus('error'); // Indicate connection loss
       }
       stopScreenShare(); // Clean up media resources
-    };
+    });
 
-    ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
+    socket.current.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
       setWsConnected(false);
       setSharingStatus('error');
       stopScreenShare(); // Clean up media resources
-    };
+    });
 
     // Cleanup on component unmount
     return () => {
-      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-        ws.current.close();
+      if (socket.current && socket.current.connected) {
+        socket.current.disconnect();
       }
       stopScreenShare(); // Ensure media resources are also cleaned up
     };
   }, []); // Empty dependency array means this runs once on mount
 
-  // Helper to send messages over WebSocket
+  // Helper to send messages over Socket.IO
   const sendWebSocketMessage = (type: WebSocketMessage['type'], payload: MessagePayload) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      const message = { type, payload };
-
-      ws.current.send(JSON.stringify(message));
+    if (socket.current && socket.current.connected) {
+      // The server's @MessageBody() expects the full WebSocketMessage object as the payload
+      // of the Socket.IO event.
+      const message: WebSocketMessage = { type, payload };
+      socket.current.emit(type, message);
     } else {
-      console.warn('WebSocket not connected, cannot send message:', type);
+      console.warn('Socket.IO not connected, cannot send message:', type);
     }
   };
 
   const startScreenShare = async () => {
     if (!wsConnected || sharingStatus === 'handshaking' || sharingStatus === 'connecting') {
-      alert('WebSocket not connected or handshake in progress. Please wait.');
+      alert('Socket.IO not connected or handshake in progress. Please wait.');
       return;
     }
 
@@ -108,11 +103,11 @@ function App() {
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          // Convert Blob to Base64 string to send over WebSocket
+          // Convert Blob to Base64 string to send over Socket.IO
           const reader = new FileReader();
           reader.onload = () => {
             const base64data = reader.result as string;
-            sendWebSocketMessage('video-frame', {  data: base64data.split(',')[1] }); // Send only the base64 part
+            sendWebSocketMessage('video-frame', {  base64data.split(',')[1] }); // Send only the base64 part
           };
           reader.readAsDataURL(event.data);
         }
