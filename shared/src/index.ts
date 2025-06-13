@@ -4,10 +4,10 @@ export interface Message {
 }
 
 // New interfaces for WebSocket signaling
-export type SignalingMessageType = 'handshake' | 'handshake-ack' | 'offer' | 'answer' | 'candidate';
+export type SignalingMessageType = 'handshake' | 'handshake-ack';
 
 export interface WebSocketMessage<T = any> {
-  type: SignalingMessageType;
+  type: SignalingMessageType | 'video-frame'; // 'video-frame' is a custom type for screen sharing
   payload: T;
 }
 
@@ -20,10 +20,7 @@ export interface HandshakeAckPayload {
   clientId: string;
 }
 
-export interface SDPPayload {
-  sdp: RTCSessionDescriptionInit;
-}
-
-export interface ICECandidatePayload {
-  candidate: RTCIceCandidateInit;
+// New interface for sending video frames over WebSocket
+export interface VideoFramePayload {
+   string; // Base64 encoded video chunk
 }
