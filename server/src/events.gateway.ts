@@ -42,11 +42,11 @@ export class EventsGateway
   @SubscribeMessage("handshake")
   handleHandshake(
     @MessageBody() message: HandshakeMessage,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ): void {
     console.log(
       `Received handshake from client ${client.id}:`,
-      message.payload,
+      message.payload
     );
 
     const ackPayload: HandshakeAckPayload = {
@@ -63,14 +63,18 @@ export class EventsGateway
   }
 
   @SubscribeMessage("video-frame")
-  handleVideoFrame(
+  async handleVideoFrame(
     @MessageBody() data: VideoFrameMessage,
-    @ConnectedSocket() client: Socket,
-  ): void {
+    @ConnectedSocket() client: Socket
+  ) {
     // In a real application, you'd process this frame (e.g., save, re-broadcast)
     // For now, just log its size.
+    // data.payload.data will now be a Node.js Buffer (which has a .length property)
+
+    const buffer = data.payload.data as Buffer;
+
     console.log(
-      `Received video frame from client ${client.id}, size: ${data.payload.data.length} bytes`,
+      `Received video frame from client ${client.id}, ${buffer.length} bytes`
     );
     // Example: Re-broadcast to all other connected clients (if this were a multi-viewer app)
     // client.broadcast.emit('video-frame', data);

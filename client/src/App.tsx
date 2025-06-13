@@ -126,15 +126,9 @@ function App() {
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          // Convert Blob to Base64 string to send over Socket.IO
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64data = reader.result as string;
-            sendWebSocketMessage("video-frame", {
-              data: base64data.split(",")[1],
-            }); // Send only the base64 part
-          };
-          reader.readAsDataURL(event.data);
+          // Send Blob directly over Socket.IO
+          // Socket.IO will automatically convert Blob to ArrayBuffer for transmission
+          sendWebSocketMessage("video-frame", {  data: event.data });
         }
       };
 
