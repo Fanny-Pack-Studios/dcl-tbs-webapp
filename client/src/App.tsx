@@ -39,7 +39,7 @@ function App() {
       <h1>Fullstack NestJS App</h1>
       <p>This is the React frontend communicating with the NestJS backend.</p>
       {message && (
-        <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
+        <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
           <h2>Message from Backend:</h2>
           <p>
             <strong>Text:</strong> "{message.text}"
