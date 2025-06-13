@@ -29,5 +29,5 @@ export interface HandshakeAckPayload {
 }
 
 export interface VideoFramePayload {
-   string; // Base64 encoded video chunk
+  data: string; // Base64 encoded video chunk
 }

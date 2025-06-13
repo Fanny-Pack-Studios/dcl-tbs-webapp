@@ -75,7 +75,7 @@ function App() {
     if (socket.current && socket.current.connected) {
       // The server's @MessageBody() expects the full WebSocketMessage object as the payload
       // of the Socket.IO event.
-      const message: WebSocketMessage = { type, payload };
+      const message = { type, payload };
       socket.current.emit(type, message);
     } else {
       console.warn('Socket.IO not connected, cannot send message:', type);
@@ -107,7 +107,7 @@ function App() {
           const reader = new FileReader();
           reader.onload = () => {
             const base64data = reader.result as string;
-            sendWebSocketMessage('video-frame', {  base64data.split(',')[1] }); // Send only the base64 part
+            sendWebSocketMessage('video-frame', {  data: base64data.split(',')[1] }); // Send only the base64 part
           };
           reader.readAsDataURL(event.data);
         }
