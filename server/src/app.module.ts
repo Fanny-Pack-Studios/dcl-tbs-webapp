@@ -2,15 +2,15 @@ import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { EventsGateway } from "./events.gateway";
-import { LivekitModule } from "./livekit/livekit.module"; // New import
-import { ConfigModule } from "@nestjs/config"; // New import
+import { LivekitModule } from "./livekit/livekit.module";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Makes ConfigService available globally
+      isGlobal: true,
     }),
-    LivekitModule, // Import the LivekitModule
+    LivekitModule,
   ],
   controllers: [AppController],
   providers: [AppService, EventsGateway],

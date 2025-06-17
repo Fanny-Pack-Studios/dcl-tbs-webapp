@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  livekit-server:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server
+    restart: no
+    ports:
+      # LiveKit API and WebSocket port
+      - "7800:7800"
+      # LiveKit WebRTC port (UDP)
+      - "7801:7801/udp"
+      # LiveKit Prometheus metrics and HTTP dashboard (optional, for monitoring)
+      - "8080:8080"
+    environment:
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+      # Internal host and port for LiveKit to bind to
+      - LIVEKIT_HOST=0.0.0.0
+      - LIVEKIT_PORT=7800
+      - LIVEKIT_WEBRTC_PORT=7801
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
