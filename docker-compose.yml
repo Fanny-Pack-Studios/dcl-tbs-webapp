@@ -13,12 +13,21 @@ services:
       # LiveKit Prometheus metrics and HTTP dashboard (optional, for monitoring)
       - "8080:8080"
     environment:
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=secret
-      # Internal host and port for LiveKit to bind to
+      # These environment variables are typically for clients generating tokens,
+      # not for the LiveKit server's internal key configuration.
+      # The server's keys are now configured via livekit.yaml.
+      # - LIVEKIT_API_KEY=devkey
+      # - LIVEKIT_API_SECRET=secret
       - LIVEKIT_HOST=0.0.0.0
       - LIVEKIT_PORT=7800
       - LIVEKIT_WEBRTC_PORT=7801
+    volumes:
+      # Mount the livekit.yaml file into the container
+      - ./livekit.yaml:/etc/livekit/livekit.yaml
+    command:
+      # Tell the LiveKit server to use the mounted config file
+      - "--config"
+      - "/etc/livekit/livekit.yaml"
     networks:
       - app-network
 

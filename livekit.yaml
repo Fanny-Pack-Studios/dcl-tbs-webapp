@@ -1,0 +1,5 @@
+# This file defines the API keys and secrets that the LiveKit server will recognize.
+# The 'devkey' and 'secret' here should match what your client applications (e.g., NestJS backend)
+# use to generate LiveKit tokens.
+keys:
+  devkey: secret
