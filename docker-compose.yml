@@ -27,3 +27,21 @@ services:
       # Tell the LiveKit server to use the mounted config file
       - "--config"
       - "/etc/livekit/livekit.yaml"
+    networks:
+      - app-network
+  livekit-egress:
+    image: livekit/egress:latest
+    container_name: livekit-egress
+    restart: no
+    environment:
+      # Point to the LiveKit server's internal URL
+      - LIVEKIT_URL=ws://livekit-server:7800
+      # Use the same API key and secret configured in livekit.yaml
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret_key_for_development_with_at_least_32_characters
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
