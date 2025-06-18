@@ -1,6 +1,12 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  rtmp-server:
+    image: alqutami/rtmp-hls
+    container_name: rtmp-server
+    ports:
+      - "1935:1935"
+      - "8080:8080"
   livekit-server:
     image: livekit/livekit-server:latest
     container_name: livekit-server
@@ -10,14 +16,7 @@ services:
       - "7800:7800"
       # LiveKit WebRTC port (UDP)
       - "7801:7801/udp"
-      # LiveKit Prometheus metrics and HTTP dashboard (optional, for monitoring)
-      - "8080:8080"
     environment:
-      # These environment variables are typically for clients generating tokens,
-      # not for the LiveKit server's internal key configuration.
-      # The server's keys are now configured via livekit.yaml.
-      # - LIVEKIT_API_KEY=devkey
-      # - LIVEKIT_API_SECRET=secret
       - LIVEKIT_HOST=0.0.0.0
       - LIVEKIT_PORT=7800
       - LIVEKIT_WEBRTC_PORT=7801
@@ -28,9 +27,3 @@ services:
       # Tell the LiveKit server to use the mounted config file
       - "--config"
       - "/etc/livekit/livekit.yaml"
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
