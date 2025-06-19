@@ -9,9 +9,14 @@ export class AppService {
   }
 
   startStreamRoom(
+    participantName: string,
     rtmpUrl: string,
     key: string
-  ): Promise<{ room: { sid: string }; egress: { egressId: string } }> {
-    return this.livekitService.createRoomAndStartRtmpEgress(rtmpUrl, key);
+  ): Promise<{ room: { sid: string }; egress: { egressId: string }; token: string }> {
+    return this.livekitService.createRoomAndStartRtmpEgress(
+      participantName,
+      rtmpUrl,
+      key
+    );
   }
 }

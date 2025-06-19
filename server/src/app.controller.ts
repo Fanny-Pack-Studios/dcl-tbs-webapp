@@ -13,6 +13,6 @@ export class AppController {
 
   @Post("startStreamRoom")
   startStreamRoom(@Body() request: StartStreamRoomRequest) {
-    return this.appService.startStreamRoom(request.rtmpURL, request.streamKey);
+    return this.appService.startStreamRoom(request.participantName, request.rtmpURL, request.streamKey);
   }
 }

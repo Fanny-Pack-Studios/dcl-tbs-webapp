@@ -1,4 +1,4 @@
-export * from "./startStreamRoomRequest";
+export * from "./startStreamRoomMessages";
 
 export type WebSocketMessage =
   | HandshakeMessage
