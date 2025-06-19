@@ -9,11 +9,13 @@ import {
   StreamProtocol,
   StreamOutput,
   EncodingOptionsPreset,
+  EncodedFileOutput,
+  EncodedFileType,
+  EncodedOutputs,
   // Uncomment these if you need to specify codecs or layouts for egress
   // VideoCodec,
   // AudioCodec,
 } from "livekit-server-sdk";
-import { generate } from "rxjs";
 import { generateRandomId } from "src/utils/randomId";
 
 @Injectable()
@@ -27,11 +29,16 @@ export class LivekitService {
   /**
    * Constructor for LivekitService.
    * The host, API key, and API secret are provided by LivekitModule's useFactory.
-   * @param host The LiveKit server host (e.g., "http://localhost:7800")
+   * @param host The LiveKit server host (e.g., "http://localhost:7880")
    * @param apiKey The LiveKit API Key
    * @param apiSecret The LiveKit API Secret
    */
-  constructor(host: string, apiKey: string, apiSecret: string) {
+  constructor(
+    host: string,
+    apiKey: string,
+    apiSecret: string,
+    private outputToFile: boolean = false
+  ) {
     this.livekitHost = host;
     this.livekitApiKey = apiKey;
     this.livekitApiSecret = apiSecret;
@@ -90,6 +97,20 @@ export class LivekitService {
     return await this.roomService.createRoom({ name: roomName });
   }
 
+  async createRoomAndGetToken(
+    participantName: string
+  ): Promise<{ room: Room; token: string }> {
+    const room = await this.createRoom(generateRandomId(10));
+
+    const token = await this.generateToken(
+      room.name,
+      generateRandomId(10),
+      participantName
+    );
+
+    return { room, token };
+  }
+
   /**
    * Starts an RTMP egress for a LiveKit room, streaming its composite output to a given URL.
    * @param roomName The name of the room to stream from.
@@ -97,18 +118,29 @@ export class LivekitService {
    * @returns The EgressInfo object containing details about the started egress.
    */
   async startRtmpEgress(
-    room: Room,
+    roomName: string,
     rtmpUrl: string,
     streamkey: string
   ): Promise<EgressInfo> {
-    return this.egressClient.startRoomCompositeEgress(
-      room.name,
-      new StreamOutput({
+    const streamUrl = `${rtmpUrl}/${streamkey}`;
+    console.log("Streaming to url: ", streamUrl);
+    const output: EncodedOutputs = {
+      stream: new StreamOutput({
         protocol: StreamProtocol.RTMP,
-        urls: [`${rtmpUrl}/${streamkey}`],
+        urls: [streamUrl],
       }),
-      { encodingOptions: EncodingOptionsPreset.H264_720P_30 }
-    );
+    };
+    if (this.outputToFile) {
+      console.log("Outputing to file");
+      output.file = new EncodedFileOutput({
+        filepath: `/out/out-${generateRandomId(10)}.mp4`,
+        fileType: EncodedFileType.MP4,
+      });
+    }
+    return this.egressClient.startRoomCompositeEgress(roomName, output, {
+      encodingOptions: EncodingOptionsPreset.H264_720P_30,
+      layout: "single-speaker",
+    });
   }
 
   /**
@@ -128,31 +160,5 @@ export class LivekitService {
       );
       throw error;
     }
-  }
-
-  /**
-   * Creates a LiveKit room and immediately starts an RTMP egress from it.
-   * The room will support WebRTC ingress by default.
-   * @param streamKey The name of the room (used as stream key).
-   * @param rtmpUrl The RTMP URL to stream the room's composite output to.
-   * @returns An object containing the created Room (or null if it existed) and the started EgressInfo.
-   */
-  async createRoomAndStartRtmpEgress(
-    name: string,
-    rtmpUrl: string,
-    streamKey: string
-  ): Promise<{ room: Room; egress: EgressInfo; token: string }> {
-    var roomId = generateRandomId(10);
-    const room = await this.createRoom(roomId);
-
-    const egress = await this.startRtmpEgress(room, rtmpUrl, streamKey);
-
-    const token = await this.generateToken(
-      room.name,
-      generateRandomId(10),
-      name
-    );
-
-    return { room, egress, token };
   }
 }

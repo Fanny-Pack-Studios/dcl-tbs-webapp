@@ -12,14 +12,20 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
         const host = configService.get<string>("LIVEKIT_HOST");
         const apiKey = configService.get<string>("LIVEKIT_API_KEY");
         const apiSecret = configService.get<string>("LIVEKIT_API_SECRET");
+        const outputToFile = configService.get<string>("OUTPUT_TO_FILE");
 
         if (!host || !apiKey || !apiSecret) {
           console.warn(
-            "LiveKit environment variables (LIVEKIT_HOST, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) are not fully set. LiveKit service will not be fully functional.",
+            "LiveKit environment variables (LIVEKIT_HOST, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) are not fully set. LiveKit service will not be fully functional."
           );
           throw new Error("LiveKit service was not properly set up");
         }
-        return new LivekitService(host, apiKey, apiSecret);
+        return new LivekitService(
+          host,
+          apiKey,
+          apiSecret,
+          outputToFile.toUpperCase() == "TRUE"
+        );
       },
       inject: [ConfigService],
     },

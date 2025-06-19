@@ -7,19 +7,23 @@ services:
     ports:
       - "1935:1935"
       - "8080:8080"
+    networks:
+      - app-network
   livekit-server:
     image: livekit/livekit-server:latest
     container_name: livekit-server
     restart: no
     ports:
       # LiveKit API and WebSocket port
-      - "7800:7800"
+      - "7880:7880"
       # LiveKit WebRTC port (UDP)
-      - "7801:7801/udp"
+      - "7881:7881/tcp"
+      - "7882:7882/udp"
+      - "5349:5349/tcp" # TURN over TLS
+      - "3478:3478/udp" # TURN over UDP
+      - "55000-56000:55000-56000" # UDP port range for WebRTC media
     environment:
       - LIVEKIT_HOST=0.0.0.0
-      - LIVEKIT_PORT=7800
-      - LIVEKIT_WEBRTC_PORT=7801
     volumes:
       # Mount the livekit.yaml file into the container
       - ./livekit.yaml:/etc/livekit/livekit.yaml
@@ -35,6 +39,8 @@ services:
   livekit-egress:
     image: livekit/egress:latest
     container_name: livekit-egress
+    ports:
+      - "7980:7980"
     restart: no
     environment:
       - EGRESS_CONFIG_FILE=/etc/livekit/egress.yaml
@@ -45,6 +51,7 @@ services:
       - redis
     volumes:
       - ./livekit-egress.yaml:/etc/livekit/egress.yaml
+      - ./out:/out
   redis:
     image: redis:latest
     container_name: redis
@@ -52,7 +59,6 @@ services:
       - "6379:6379"
     networks:
       - app-network
-  
 
 networks:
   app-network:

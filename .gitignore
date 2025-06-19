@@ -2,3 +2,5 @@
 node_modules
 dist
 server/.env
+out/*.json
+out/*.mp4

@@ -4,17 +4,12 @@ import {
 import { useState } from 'react';
 import ScreenShareButton from './ScreenShareButton.tsx'
 import { StartStreamRoomRequest, StartStreamRoomResponse } from '@fullstack-nest-app/shared';
-
-const LIVEKIT_URL = 'ws://localhost:7800';
-const SERVER_URL = 'http://localhost:3001';
-
+import { LIVEKIT_URL, SERVER_URL } from './definitions.ts';
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
 
   const startStreamingRoom = async () => {
     const request: StartStreamRoomRequest = {
-      rtmpURL: 'rtmp://rtmp-server:1935/live',
-      streamKey: 'test',
       participantName: 'Screen Sharer',
     }
     const res = await fetch(`${SERVER_URL}/api/startStreamRoom`, {

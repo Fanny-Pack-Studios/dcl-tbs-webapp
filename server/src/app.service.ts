@@ -1,5 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { LivekitService } from "./livekit/livekit.service";
+import {
+  StartRTMPStreamResponse,
+  StartStreamRoomResponse,
+} from "@fullstack-nest-app/shared";
 
 @Injectable()
 export class AppService {
@@ -8,15 +12,23 @@ export class AppService {
     return "Hello from NestJS backend!";
   }
 
-  startStreamRoom(
-    participantName: string,
-    rtmpUrl: string,
-    key: string
-  ): Promise<{ room: { sid: string }; egress: { egressId: string }; token: string }> {
-    return this.livekitService.createRoomAndStartRtmpEgress(
-      participantName,
-      rtmpUrl,
-      key
+  async startStreamRoom(
+    participantName: string
+  ): Promise<StartStreamRoomResponse> {
+    const result =
+      await this.livekitService.createRoomAndGetToken(participantName);
+    return { roomName: result.room.name, token: result.token };
+  }
+
+  async startRTMPStream(
+    roomName: string,
+    rtmpURL: string,
+    streamKey: string
+  ): Promise<StartRTMPStreamResponse> {
+    return await this.livekitService.startRtmpEgress(
+      roomName,
+      rtmpURL,
+      streamKey
     );
   }
 }
