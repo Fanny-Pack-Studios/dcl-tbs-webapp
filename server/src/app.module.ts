@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { EventsGateway } from "./events.gateway";
 import { LivekitModule } from "./livekit/livekit.module";
 import { ConfigModule } from "@nestjs/config";
 
@@ -13,6 +12,6 @@ import { ConfigModule } from "@nestjs/config";
     LivekitModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EventsGateway],
+  providers: [AppService],
 })
 export class AppModule {}

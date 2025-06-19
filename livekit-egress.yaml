@@ -1,0 +1,8 @@
+api_key: devkey
+api_secret: secret_key_for_development_with_at_least_32_characters
+ws_url: ws://livekit-server:7800
+redis:
+  address: redis:6379
+  username: redis
+  password:
+  db: 0

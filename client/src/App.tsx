@@ -128,7 +128,7 @@ function App() {
         if (event.data.size > 0) {
           // Send Blob directly over Socket.IO
           // Socket.IO will automatically convert Blob to ArrayBuffer for transmission
-          sendWebSocketMessage("video-frame", {  data: event.data });
+          sendWebSocketMessage("video-frame", { data: event.data });
         }
       };
 

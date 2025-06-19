@@ -1,20 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 import {
   RoomServiceClient,
   AccessToken,
   Room,
-  EgressServiceClient,
   RoomCompositeEgressRequest,
+  EgressClient,
   EgressInfo,
+  StreamProtocol,
+  StreamOutput,
+  EncodingOptionsPreset,
   // Uncomment these if you need to specify codecs or layouts for egress
   // VideoCodec,
   // AudioCodec,
-} from 'livekit-server-sdk';
+} from "livekit-server-sdk";
+import { generate } from "rxjs";
+import { generateRandomId } from "src/utils/randomId";
 
 @Injectable()
 export class LivekitService {
   private roomService: RoomServiceClient;
-  private egressService: EgressServiceClient;
+  private egressClient: EgressClient;
   private readonly livekitHost: string;
   private readonly livekitApiKey: string;
   private readonly livekitApiSecret: string;
@@ -34,12 +39,12 @@ export class LivekitService {
     this.roomService = new RoomServiceClient(
       this.livekitHost,
       this.livekitApiKey,
-      this.livekitApiSecret,
+      this.livekitApiSecret
     );
-    this.egressService = new EgressServiceClient(
+    this.egressClient = new EgressClient(
       this.livekitHost,
       this.livekitApiKey,
-      this.livekitApiSecret,
+      this.livekitApiSecret
     );
     console.log(`LiveKit services initialized for host: ${this.livekitHost}`);
   }
@@ -50,14 +55,6 @@ export class LivekitService {
   getRoomService(): RoomServiceClient {
     return this.roomService;
   }
-
-  /**
-   * Returns the LiveKit EgressServiceClient instance.
-   */
-  getEgressService(): EgressServiceClient {
-    return this.egressService;
-  }
-
   /**
    * Generates a LiveKit access token for a participant.
    * @param roomName The name of the room the participant will join.
@@ -67,13 +64,13 @@ export class LivekitService {
    * @param canSubscribe Whether the participant can subscribe to audio/video.
    * @returns A JWT token string.
    */
-  generateToken(
+  async generateToken(
     roomName: string,
     participantIdentity: string,
     participantName?: string,
     canPublish?: boolean,
-    canSubscribe?: boolean,
-  ): string {
+    canSubscribe?: boolean
+  ): Promise<string> {
     const at = new AccessToken(this.livekitApiKey, this.livekitApiSecret, {
       identity: participantIdentity,
       name: participantName,
@@ -89,26 +86,8 @@ export class LivekitService {
     return at.toJwt();
   }
 
-  /**
-   * Creates a LiveKit room. If the room already exists, it will log a message.
-   * LiveKit rooms inherently support WebRTC ingress for participants.
-   * @param roomName The name of the room to create.
-   * @returns The created Room object, or null if it already existed.
-   */
-  async createRoom(roomName: string): Promise<Room | null> {
-    try {
-      const room = await this.roomService.createRoom({ name: roomName });
-      console.log(`LiveKit room '${room.name}' created.`);
-      return room;
-    } catch (error) {
-      // LiveKit throws an error if room already exists, which is often fine.
-      if (error.message.includes('room already exists')) {
-        console.log(`LiveKit room '${roomName}' already exists.`);
-        return null; // Indicate that no new room was created
-      }
-      console.error(`Error creating LiveKit room '${roomName}':`, error.message);
-      throw error;
-    }
+  async createRoom(roomName: string): Promise<Room> {
+    return await this.roomService.createRoom({ name: roomName });
   }
 
   /**
@@ -117,38 +96,19 @@ export class LivekitService {
    * @param rtmpUrl The RTMP URL to stream to.
    * @returns The EgressInfo object containing details about the started egress.
    */
-  async startRtmpEgress(roomName: string, rtmpUrl: string): Promise<EgressInfo> {
-    const request: RoomCompositeEgressRequest = {
-      roomName: roomName,
-      rtmp: {
-        urls: [rtmpUrl],
-      },
-      // Optional: Configure video/audio output for the composite stream
-      // video: {
-      //   width: 1280,
-      //   height: 720,
-      //   depth: 24,
-      //   framerate: 30,
-      //   bitrate: 4500,
-      //   keyFrameInterval: 1,
-      //   codec: VideoCodec.VP8, // or H264
-      // },
-      // audio: {
-      //   bitrate: 128,
-      //   channels: 2,
-      //   codec: AudioCodec.OPUS, // or AAC
-      // },
-      // layout: 'speaker-dark-sidebar', // Example layout
-    };
-
-    try {
-      const egress = await this.egressService.startRoomCompositeEgress(request);
-      console.log(`Started RTMP egress for room '${roomName}' to '${rtmpUrl}'. Egress ID: ${egress.egressId}`);
-      return egress;
-    } catch (error) {
-      console.error(`Error starting RTMP egress for room '${roomName}' to '${rtmpUrl}':`, error.message);
-      throw error;
-    }
+  async startRtmpEgress(
+    room: Room,
+    rtmpUrl: string,
+    streamkey: string
+  ): Promise<EgressInfo> {
+    return this.egressClient.startRoomCompositeEgress(
+      room.name,
+      new StreamOutput({
+        protocol: StreamProtocol.RTMP,
+        urls: [`${rtmpUrl}/${streamkey}`],
+      }),
+      { encodingOptions: EncodingOptionsPreset.H264_720P_30 }
+    );
   }
 
   /**
@@ -158,11 +118,14 @@ export class LivekitService {
    */
   async stopEgress(egressId: string): Promise<EgressInfo> {
     try {
-      const egress = await this.egressService.stopEgress(egressId);
+      const egress = await this.egressClient.stopEgress(egressId);
       console.log(`Stopped egress with ID: ${egressId}`);
       return egress;
     } catch (error) {
-      console.error(`Error stopping egress with ID '${egressId}':`, error.message);
+      console.error(
+        `Error stopping egress with ID '${egressId}':`,
+        error.message
+      );
       throw error;
     }
   }
@@ -174,14 +137,22 @@ export class LivekitService {
    * @param rtmpUrl The RTMP URL to stream the room's composite output to.
    * @returns An object containing the created Room (or null if it existed) and the started EgressInfo.
    */
-  async createRoomAndStartRtmpEgress(streamKey: string, rtmpUrl: string): Promise<{ room: Room | null, egress: EgressInfo }> {
-    // 1. Create the room (if it doesn't exist).
-    // LiveKit rooms inherently support WebRTC ingress from participants.
-    const room = await this.createRoom(streamKey);
+  async createRoomAndStartRtmpEgress(
+    name: string,
+    rtmpUrl: string,
+    streamKey: string
+  ): Promise<{ room: Room; egress: EgressInfo; token: string }> {
+    var roomId = generateRandomId(10);
+    const room = await this.createRoom(roomId);
 
-    // 2. Start RTMP egress from the room.
-    const egress = await this.startRtmpEgress(streamKey, rtmpUrl);
+    const egress = await this.startRtmpEgress(room, rtmpUrl, streamKey);
 
-    return { room, egress };
+    const token = await this.generateToken(
+      room.name,
+      generateRandomId(10),
+      name
+    );
+
+    return { room, egress, token };
   }
 }

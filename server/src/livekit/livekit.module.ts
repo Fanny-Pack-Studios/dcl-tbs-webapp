@@ -15,7 +15,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 
         if (!host || !apiKey || !apiSecret) {
           console.warn(
-            "LiveKit environment variables (LIVEKIT_HOST, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) are not fully set. LiveKit service will not be fully functional."
+            "LiveKit environment variables (LIVEKIT_HOST, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) are not fully set. LiveKit service will not be fully functional.",
           );
           throw new Error("LiveKit service was not properly set up");
         }

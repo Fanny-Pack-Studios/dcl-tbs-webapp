@@ -13,5 +13,9 @@
   "license": "MIT",
   "devDependencies": {
     "typescript": "5.4.5"
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2"
   }
 }

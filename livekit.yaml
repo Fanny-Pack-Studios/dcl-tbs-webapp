@@ -1,4 +1,8 @@
 keys:
   devkey: secret_key_for_development_with_at_least_32_characters
 
-  
+redis:
+  address: redis:6379
+  username: redis
+  password:
+  db: 0
