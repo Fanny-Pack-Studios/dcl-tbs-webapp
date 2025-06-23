@@ -24,7 +24,6 @@ services:
   livekit-server:
     image: livekit/livekit-server:latest
     container_name: livekit-server
-    restart: no
     ports:
       # LiveKit API and WebSocket port
       - "7880:7880"
@@ -52,7 +51,6 @@ services:
     container_name: livekit-egress
     ports:
       - "7980:7980"
-    restart: no
     environment:
       - EGRESS_CONFIG_FILE=/etc/livekit/egress.yaml
     networks:
