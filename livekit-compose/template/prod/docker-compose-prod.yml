@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   nginx:
-    image: pablitar/dcl-tbs-frontend:latest
+    image: nginx:latest
     container_name: nginx
     ports:
       - "80:80"
