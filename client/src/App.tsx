@@ -31,7 +31,7 @@ export default function App() {
       <h1>Decentraland TBS Screen Share Test</h1>
       {!token && <button onClick={startStreamingRoom}>Join Room</button>}
 
-      {token && (
+      {token && identity && (
         <LiveKitRoom
           token={token}
           serverUrl={LIVEKIT_URL}
