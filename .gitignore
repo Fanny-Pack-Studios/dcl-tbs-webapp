@@ -2,8 +2,8 @@
 node_modules
 dist
 server/.env
-out/*.json
-out/*.mp4
+livekit-compose/out/*.json
+livekit-compose/out/*.mp4
 livekit-compose/docker-compose.yml
 livekit-compose/livekit-egress.yaml
 livekit-compose/livekit.yaml
