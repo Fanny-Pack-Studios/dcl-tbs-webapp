@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   nginx:
-    image: nginx:latest
+    image: pablitar/dcl-tbs-frontend:latest
     container_name: nginx
     ports:
       - "80:80"
@@ -12,7 +12,7 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     network_mode: host
-
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
   certbot:
     image: certbot/certbot
     container_name: certbot
@@ -20,6 +20,7 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
   livekit-server:
     image: livekit/livekit-server:latest
     container_name: livekit-server
@@ -32,7 +33,7 @@ services:
       - "7882:7882/udp"
       - "5349:5349/tcp" # TURN over TLS
       - "3478:3478/udp" # TURN over UDP
-      - "50000-60000:50000-6000" # UDP port range for WebRTC media
+      - "50000-60000:50000-60000" # UDP port range for WebRTC media
     environment:
       - LIVEKIT_HOST=0.0.0.0
     volumes:
