@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    network_mode: host
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  livekit-server:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server
+    restart: no
+    ports:
+      # LiveKit API and WebSocket port
+      - "7880:7880"
+      # LiveKit WebRTC port (UDP)
+      - "7881:7881/tcp"
+      - "7882:7882/udp"
+      - "5349:5349/tcp" # TURN over TLS
+      - "3478:3478/udp" # TURN over UDP
+      - "50000-60000:50000-6000" # UDP port range for WebRTC media
+    environment:
+      - LIVEKIT_HOST=0.0.0.0
+    volumes:
+      # Mount the livekit.yaml file into the container
+      - ./livekit.yaml:/etc/livekit/livekit.yaml
+    command:
+      # Tell the LiveKit server to use the mounted config file
+      - "--config"
+      - "/etc/livekit/livekit.yaml"
+    network_mode: host
+    depends_on:
+      - redis
+  
+  livekit-egress:
+    image: livekit/egress:latest
+    container_name: livekit-egress
+    ports:
+      - "7980:7980"
+    restart: no
+    environment:
+      - EGRESS_CONFIG_FILE=/etc/livekit/egress.yaml
+    networks:
+      - app-network
+    depends_on:
+      - livekit-server
+      - redis
+    volumes:
+      - ./livekit-egress.yaml:/etc/livekit/egress.yaml
+      - ./out:/out
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+
+networks:
+  app-network:
+    driver: bridge
