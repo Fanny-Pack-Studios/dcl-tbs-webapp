@@ -1,5 +1,5 @@
-export const LIVEKIT_URL = "ws://localhost:7880";
-export const SERVER_URL = "http://localhost:3001";
+export const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL;
+export const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
-export const RTMP_BASE_URL = "rtmp://rtmp-server:1935/live";
-export const RTMP_STREAM_KEY = "test";
+export const RTMP_BASE_URL = import.meta.env.VITE_RTMP_BASE_URL;
+export const RTMP_STREAM_KEY = import.meta.env.VITE_STREAM_KEY;

@@ -12,7 +12,7 @@ export default function App() {
     const request: StartStreamRoomRequest = {
       participantName: 'Screen Sharer',
     }
-    const res = await fetch(`${SERVER_URL}/api/startStreamRoom`, {
+    const res = await fetch(`${SERVER_URL}/startStreamRoom`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
