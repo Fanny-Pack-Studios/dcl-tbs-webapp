@@ -7,6 +7,7 @@ import { StartStreamRoomRequest, StartStreamRoomResponse } from '@fullstack-nest
 import { LIVEKIT_URL, SERVER_URL } from './definitions.ts';
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
+  const [identity, setIdentity] = useState<string | null>(null);
 
   const startStreamingRoom = async () => {
     const request: StartStreamRoomRequest = {
@@ -22,6 +23,7 @@ export default function App() {
 
     const response: StartStreamRoomResponse = await res.json();
     setToken(response.token);
+    setIdentity(response.identity);
   };
 
   return (
@@ -37,7 +39,7 @@ export default function App() {
           onDisconnected={() => setToken(null)}
           style={{ height: '80vh' }}
         >
-          <ScreenShareButton />
+          <ScreenShareButton identity={identity} />
         </LiveKitRoom>
       )}
     </div>

@@ -11,6 +11,9 @@ export class StartStreamRoomResponse {
 
   @IsNotEmpty()
   token!: string;
+
+  @IsNotEmpty()
+  identity!: string;
 }
 
 export class StartRTMPStreamRequest {
@@ -22,6 +25,9 @@ export class StartRTMPStreamRequest {
 
   @IsNotEmpty()
   roomId!: string;
+
+  @IsNotEmpty()
+  identity!: string;
 }
 
 export class StartRTMPStreamResponse {

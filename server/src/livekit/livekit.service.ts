@@ -12,6 +12,8 @@ import {
   EncodedFileOutput,
   EncodedFileType,
   EncodedOutputs,
+  EncodingOptions,
+  TrackType,
   // Uncomment these if you need to specify codecs or layouts for egress
   // VideoCodec,
   // AudioCodec,
@@ -99,16 +101,17 @@ export class LivekitService {
 
   async createRoomAndGetToken(
     participantName: string
-  ): Promise<{ room: Room; token: string }> {
+  ): Promise<{ room: Room; token: string; identity: string }> {
     const room = await this.createRoom(generateRandomId(10));
+    const identity = generateRandomId(10);
 
     const token = await this.generateToken(
       room.name,
-      generateRandomId(10),
+      identity,
       participantName
     );
 
-    return { room, token };
+    return { room, token, identity };
   }
 
   /**
@@ -119,6 +122,7 @@ export class LivekitService {
    */
   async startRtmpEgress(
     roomName: string,
+    identity: string,
     rtmpUrl: string,
     streamkey: string
   ): Promise<EgressInfo> {
@@ -137,9 +141,25 @@ export class LivekitService {
         fileType: EncodedFileType.MP4,
       });
     }
-    return this.egressClient.startRoomCompositeEgress(roomName, output, {
+    console.log("Looking for participant: ", identity);
+    const participant = await this.roomService.getParticipant(
+      roomName,
+      identity
+    );
+
+    const audioTrackId = participant.tracks.find(
+      (it) => it.type == TrackType.AUDIO
+    )?.sid;
+    const videoTrackId = participant.tracks.find(
+      (it) => it.type == TrackType.VIDEO
+    )?.sid;
+
+    console.log("Tracks: ", audioTrackId, " - ", videoTrackId);
+
+    return this.egressClient.startTrackCompositeEgress(roomName, output, {
       encodingOptions: EncodingOptionsPreset.H264_720P_30,
-      layout: "single-speaker",
+      audioTrackId,
+      videoTrackId,
     });
   }
 

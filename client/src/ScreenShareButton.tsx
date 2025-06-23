@@ -1,21 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoomContext } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { StartRTMPStreamRequest } from '@fullstack-nest-app/shared';
 import { RTMP_BASE_URL as DEFAULT_RTMP_URL, RTMP_STREAM_KEY as DEFAULT_STREAM_KEY, SERVER_URL } from './definitions';
 
-export default function ScreenShareButton() {
+const RTMP_URL_KEY = 'lastRtmpUrl';
+const STREAM_KEY_KEY = 'lastStreamKey';
+
+export default function ScreenShareButton(props: { identity: string }) {
   const room = useRoomContext();
   const [sharing, setSharing] = useState(false);
-  const [rtmpURL, setRtmpURL] = useState(DEFAULT_RTMP_URL);
-  const [streamKey, setStreamKey] = useState(DEFAULT_STREAM_KEY);
+  const [rtmpURL, setRtmpURL] = useState(() => {
+    return localStorage.getItem(RTMP_URL_KEY) || DEFAULT_RTMP_URL;
+  });
+  const [streamKey, setStreamKey] = useState(() => {
+    return localStorage.getItem(STREAM_KEY_KEY) || DEFAULT_STREAM_KEY;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(RTMP_URL_KEY, rtmpURL);
+  }, [rtmpURL]);
+
+  useEffect(() => {
+    localStorage.setItem(STREAM_KEY_KEY, streamKey);
+  }, [streamKey]);
   
   const startRTMPStream = async (rtmpURL: string, streamKey: string) => {
     try {
       const request: StartRTMPStreamRequest = {
         roomId: room.name,
         rtmpURL,
-        streamKey
+        streamKey,
+        identity: props.identity,
       }
       const result: Response = await fetch(`${SERVER_URL}/startRTMPStream`, {
         method: 'POST',

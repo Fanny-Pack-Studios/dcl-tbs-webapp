@@ -17,16 +17,22 @@ export class AppService {
   ): Promise<StartStreamRoomResponse> {
     const result =
       await this.livekitService.createRoomAndGetToken(participantName);
-    return { roomName: result.room.name, token: result.token };
+    return {
+      roomName: result.room.name,
+      token: result.token,
+      identity: result.identity,
+    };
   }
 
   async startRTMPStream(
     roomName: string,
+    identity: string,
     rtmpURL: string,
     streamKey: string
   ): Promise<StartRTMPStreamResponse> {
     return await this.livekitService.startRtmpEgress(
       roomName,
+      identity,
       rtmpURL,
       streamKey
     );
